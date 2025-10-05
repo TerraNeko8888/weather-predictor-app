@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState } from 'react';
 import { Cloud, Wind, Sun, CloudRain, Thermometer, Droplets, Eye, Loader2, Info } from 'lucide-react';
 
