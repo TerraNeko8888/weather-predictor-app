@@ -1,40 +1,58 @@
-"use client";
+"use client";  // <<— HARUS di baris paling atas
+
 import React, { useState } from 'react';
 import { Cloud, Wind, Sun, CloudRain, Thermometer, Droplets, Eye, Loader2, Info } from 'lucide-react';
 
 export default function WeatherPredictor() {
+  const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [prediction, setPrediction] = useState('');
-  const [bmkgData, setBmkgData] = useState(null);
-  
-  const [weatherParams, setWeatherParams] = useState({
-    suhu: '',
-    kelembaban: '',
-    angin: '',
-    kondisiLangit: 'cerah',
-    tekananUdara: '',
-    visibility: '',
-    lokasi: 'Jakarta'
-  });
+  const [error, setError] = useState(null);
+  const [city, setCity] = useState("");
 
-  const kondisiLangitOptions = [
-    { value: 'cerah', label: 'Cerah' },
-    { value: 'berawan', label: 'Berawan' },
-    { value: 'mendung', label: 'Mendung' },
-    { value: 'hujan-ringan', label: 'Hujan Ringan' },
-    { value: 'hujan-lebat', label: 'Hujan Lebat' }
-  ];
+  const handleFetch = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-  const lokasiOptions = [
-    'Jakarta', 'Bandung', 'Surabaya', 'Medan', 'Semarang',
-    'Makassar', 'Palembang', 'Denpasar', 'Yogyakarta', 'Malang'
-  ];
+    try {
+      // Ganti URL sesuai API-mu
+      const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch");
+      }
+      const data = await res.json();
+      setWeather(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const getKelembabanCategory = (value) => {
-    if (!value) return { text: '', color: '' };
-    const val = parseFloat(value);
-    if (val < 30) return { text: 'Sangat Kering', color: 'text-orange-600' };
-    if (val < 50) return { text: 'Kering', color: 'text-yellow-600' };
+  return (
+    <div className="weather-container">
+      <form onSubmit={handleFetch}>
+        <input
+          type="text"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          placeholder="Enter city..."
+        />
+        <button type="submit">Get Weather</button>
+      </form>
+
+      {loading && <Loader2 className="animate-spin" />}
+      {error && <div className="error">Error: {error}</div>}
+      {weather && (
+        <div className="weather-info">
+          <h3>{weather.cityName}</h3>
+          <div>Temperature: {weather.temp}°C</div>
+          {/* Komponen ikon berdasarkan kondisi cuaca */}
+        </div>
+      )}
+    </div>
+  );
+      }    if (val < 50) return { text: 'Kering', color: 'text-yellow-600' };
     if (val < 70) return { text: 'Normal/Nyaman', color: 'text-green-600' };
     if (val < 85) return { text: 'Lembab', color: 'text-blue-600' };
     return { text: 'Sangat Lembab', color: 'text-blue-800' };
