@@ -1,10 +1,8 @@
-// page.js — ini adalah Server Component (default) — boleh memanggil Client Component
 import WeatherPredictor from "@/components/WeatherPredictor";
 
-export default function HomePage() {
+export default function Home() {
   return (
-    <main>
-      <h1>Weather Predictor</h1>
+    <main className="flex flex-col items-center justify-center min-h-screen">
       <WeatherPredictor />
     </main>
   );
