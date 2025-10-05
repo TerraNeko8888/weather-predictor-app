@@ -1,40 +1,163 @@
-// src/components/WeatherPredictor.js
-
 "use client";
-import React, { useState } from 'react';
-import { Cloud, Wind, Sun, CloudRain, Thermometer, Droplets, Eye, Loader2, Info } from 'lucide-react';
+import React, { useState, useEffect } from "react";
 
 export default function WeatherPredictor() {
+  const [provinces, setProvinces] = useState([]);
+  const [regencies, setRegencies] = useState([]);
+  const [districts, setDistricts] = useState([]);
+
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedRegency, setSelectedRegency] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
+
+  const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [prediction, setPrediction] = useState('');
-  const [bmkgData, setBmkgData] = useState(null);
-  
-  const [weatherParams, setWeatherParams] = useState({
-    suhu: '',
-    kelembaban: '',
-    angin: '',
-    kondisiLangit: 'cerah',
-    tekananUdara: '',
-    visibility: '',
-    lokasi: 'Jakarta'
-  });
 
-  const kondisiLangitOptions = [
-    { value: 'cerah', label: 'Cerah' },
-    { value: 'berawan', label: 'Berawan' },
-    { value: 'mendung', label: 'Mendung' },
-    { value: 'hujan-ringan', label: 'Hujan Ringan' },
-    { value: 'hujan-lebat', label: 'Hujan Lebat' }
-  ];
+  // Fetch provinsi saat awal
+  useEffect(() => {
+    fetch("https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json")
+      .then((res) => res.json())
+      .then(setProvinces)
+      .catch((err) => console.error("Error fetching provinces:", err));
+  }, []);
 
-  const lokasiOptions = [
-    'Jakarta', 'Bandung', 'Surabaya', 'Medan', 'Semarang',
-    'Makassar', 'Palembang', 'Denpasar', 'Yogyakarta', 'Malang'
-  ];
+  // Fetch kabupaten setelah pilih provinsi
+  useEffect(() => {
+    if (selectedProvince) {
+      fetch(
+        `https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${selectedProvince}.json`
+      )
+        .then((res) => res.json())
+        .then(setRegencies)
+        .catch((err) => console.error("Error fetching regencies:", err));
+    } else {
+      setRegencies([]);
+      setSelectedRegency("");
+      setDistricts([]);
+    }
+  }, [selectedProvince]);
 
-  const getKelembabanCategory = (value) => {
-    if (!value) return { text: '', color: '' };
-    const val = parseFloat(value);
+  // Fetch kecamatan setelah pilih kabupaten
+  useEffect(() => {
+    if (selectedRegency) {
+      fetch(
+        `https://www.emsifa.com/api-wilayah-indonesia/api/districts/${selectedRegency}.json`
+      )
+        .then((res) => res.json())
+        .then(setDistricts)
+        .catch((err) => console.error("Error fetching districts:", err));
+    } else {
+      setDistricts([]);
+    }
+  }, [selectedRegency]);
+
+  // Simulasi prediksi cuaca (bisa diganti dengan API BMKG / OpenWeather)
+  const predictWeather = async () => {
+    if (!selectedProvince || !selectedRegency || !selectedDistrict) {
+      alert("Pilih provinsi, kabupaten, dan kecamatan terlebih dahulu!");
+      return;
+    }
+
+    setLoading(true);
+    setWeather(null);
+
+    // Contoh hasil dummy (simulasi prediksi)
+    setTimeout(() => {
+      const sampleWeather = ["Cerah", "Berawan", "Hujan Ringan", "Hujan Lebat"];
+      const random = sampleWeather[Math.floor(Math.random() * sampleWeather.length)];
+      setWeather({
+        province: provinces.find((p) => p.id === selectedProvince)?.name,
+        regency: regencies.find((r) => r.id === selectedRegency)?.name,
+        district: districts.find((d) => d.id === selectedDistrict)?.name,
+        prediction: random,
+      });
+      setLoading(false);
+    }, 1500);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gradient-to-br from-blue-50 to-blue-200">
+      <div className="bg-white shadow-lg rounded-2xl p-6 w-full max-w-md">
+        <h1 className="text-2xl font-bold text-center mb-4 text-blue-700">
+          🌦️ Prediksi Cuaca Indonesia
+        </h1>
+
+        {/* Dropdown Provinsi */}
+        <label className="block mb-2 text-sm font-semibold text-gray-700">
+          Provinsi
+        </label>
+        <select
+          className="w-full border p-2 rounded mb-4"
+          value={selectedProvince}
+          onChange={(e) => setSelectedProvince(e.target.value)}
+        >
+          <option value="">Pilih Provinsi</option>
+          {provinces.map((prov) => (
+            <option key={prov.id} value={prov.id}>
+              {prov.name}
+            </option>
+          ))}
+        </select>
+
+        {/* Dropdown Kabupaten */}
+        <label className="block mb-2 text-sm font-semibold text-gray-700">
+          Kabupaten / Kota
+        </label>
+        <select
+          className="w-full border p-2 rounded mb-4"
+          value={selectedRegency}
+          onChange={(e) => setSelectedRegency(e.target.value)}
+          disabled={!selectedProvince}
+        >
+          <option value="">Pilih Kabupaten / Kota</option>
+          {regencies.map((kab) => (
+            <option key={kab.id} value={kab.id}>
+              {kab.name}
+            </option>
+          ))}
+        </select>
+
+        {/* Dropdown Kecamatan */}
+        <label className="block mb-2 text-sm font-semibold text-gray-700">
+          Kecamatan
+        </label>
+        <select
+          className="w-full border p-2 rounded mb-4"
+          value={selectedDistrict}
+          onChange={(e) => setSelectedDistrict(e.target.value)}
+          disabled={!selectedRegency}
+        >
+          <option value="">Pilih Kecamatan</option>
+          {districts.map((kec) => (
+            <option key={kec.id} value={kec.id}>
+              {kec.name}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={predictWeather}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition"
+          disabled={loading}
+        >
+          {loading ? "Memproses..." : "Prediksi Cuaca"}
+        </button>
+
+        {/* Hasil Prediksi */}
+        {weather && (
+          <div className="mt-6 p-4 border rounded-lg bg-blue-50 text-center">
+            <p className="font-semibold text-gray-700">
+              📍 {weather.district}, {weather.regency}, {weather.province}
+            </p>
+            <p className="text-lg font-bold text-blue-700 mt-2">
+              Prediksi: {weather.prediction}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}    const val = parseFloat(value);
     if (val < 30) return { text: 'Sangat Kering', color: 'text-orange-600' };
     if (val < 50) return { text: 'Kering', color: 'text-yellow-600' };
     if (val < 70) return { text: 'Normal/Nyaman', color: 'text-green-600' };
